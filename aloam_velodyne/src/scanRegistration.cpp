@@ -416,35 +416,35 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
     sensor_msgs::msg::PointCloud2 laserCloudOutMsg;
     pcl::toROSMsg(*laserCloud, laserCloudOutMsg);
     laserCloudOutMsg.header.stamp = laserCloudMsg->header.stamp;
-    laserCloudOutMsg.header.frame_id = "camera_init";
+    laserCloudOutMsg.header.frame_id = "base_link";
     // pubLaserCloud->publish(laserCloudOutMsg);
     pc2arr.point_clouds.push_back(std::move(laserCloudOutMsg));
 
     sensor_msgs::msg::PointCloud2 cornerPointsSharpMsg;
     pcl::toROSMsg(cornerPointsSharp, cornerPointsSharpMsg);
     cornerPointsSharpMsg.header.stamp = laserCloudMsg->header.stamp;
-    cornerPointsSharpMsg.header.frame_id = "camera_init";
+    cornerPointsSharpMsg.header.frame_id = "base_link";
     // pubCornerPointsSharp->publish(cornerPointsSharpMsg);
     pc2arr.point_clouds.push_back(std::move(cornerPointsSharpMsg));
 
     sensor_msgs::msg::PointCloud2 cornerPointsLessSharpMsg;
     pcl::toROSMsg(cornerPointsLessSharp, cornerPointsLessSharpMsg);
     cornerPointsLessSharpMsg.header.stamp = laserCloudMsg->header.stamp;
-    cornerPointsLessSharpMsg.header.frame_id = "camera_init";
+    cornerPointsLessSharpMsg.header.frame_id = "base_link";
     // pubCornerPointsLessSharp->publish(cornerPointsLessSharpMsg);
     pc2arr.point_clouds.push_back(std::move(cornerPointsLessSharpMsg));
 
     sensor_msgs::msg::PointCloud2 surfPointsFlat2;
     pcl::toROSMsg(surfPointsFlat, surfPointsFlat2);
     surfPointsFlat2.header.stamp = laserCloudMsg->header.stamp;
-    surfPointsFlat2.header.frame_id = "camera_init";
+    surfPointsFlat2.header.frame_id = "base_link";
     // pubSurfPointsFlat->publish(surfPointsFlat2);
     pc2arr.point_clouds.push_back(std::move(surfPointsFlat2));
 
     sensor_msgs::msg::PointCloud2 surfPointsLessFlat2;
     pcl::toROSMsg(surfPointsLessFlat, surfPointsLessFlat2);
     surfPointsLessFlat2.header.stamp = laserCloudMsg->header.stamp;
-    surfPointsLessFlat2.header.frame_id = "camera_init";
+    surfPointsLessFlat2.header.frame_id = "base_link";
     // pubSurfPointsLessFlat->publish(surfPointsLessFlat2);
     pc2arr.point_clouds.push_back(std::move(surfPointsLessFlat2));
     // ignore the odom component of pc2 arr for now
@@ -459,12 +459,13 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
             sensor_msgs::msg::PointCloud2 scanMsg;
             pcl::toROSMsg(laserCloudScans[i], scanMsg);
             scanMsg.header.stamp = laserCloudMsg->header.stamp;
-            scanMsg.header.frame_id = "camera_init";
+            scanMsg.header.frame_id = "base_link";
             pubEachScan[i]->publish(scanMsg);
         }
     }
 
     // printf("scan registration time %f ms *************\n", t_whole.toc());
+    RCLCPP_INFO(node->get_logger(), "Whole scanReg time %f ms", t_whole.toc());
     if(t_whole.toc() > 100.0)
         RCLCPP_WARN(node->get_logger(), "scan registration process over 100ms, it is %f", t_whole.toc());
         // ROS_WARN("scan registration process over 100ms");

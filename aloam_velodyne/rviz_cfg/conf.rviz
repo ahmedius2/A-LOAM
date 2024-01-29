@@ -11,6 +11,7 @@ Panels:
         - /Odometry1
         - /Path2
         - /PointCloud21
+        - /Odometry2
       Splitter Ratio: 0.5
     Tree Height: 475
   - Class: rviz_common/Selection
@@ -61,7 +62,23 @@ Visualization Manager:
         All Enabled: true
         aft_mapped:
           Value: true
+        base_link:
+          Value: true
+        base_link_frd:
+          Value: true
         camera_init:
+          Value: true
+        imu_link:
+          Value: true
+        laser_link:
+          Value: true
+        map:
+          Value: true
+        map_ned:
+          Value: true
+        odom:
+          Value: true
+        odom_ned:
           Value: true
       Marker Scale: 10
       Name: TF
@@ -119,7 +136,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 100
       Name: Odometry
       Position Tolerance: 0.10000000149011612
@@ -140,7 +157,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /aft_mapped_to_init
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
@@ -184,9 +201,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 15.099230766296387
+      Max Intensity: 15.099345207214355
       Min Color: 0; 0; 0
-      Min Intensity: 0.0006614865851588547
+      Min Intensity: 0.0005443251575343311
       Name: PointCloud2
       Position Transformer: XYZ
       Selectable: true
@@ -202,6 +219,45 @@ Visualization Manager:
         Value: /laser_cloud_map
       Use Fixed Frame: true
       Use rainbow: true
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz_default_plugins/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 100
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /aft_mapped_to_init_high_frec
       Value: true
   Enabled: true
   Global Options:
@@ -249,7 +305,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 230.03021240234375
+      Distance: 291.18389892578125
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -264,10 +320,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0397961139678955
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.236767053604126
+      Yaw: 3.2117671966552734
     Saved: ~
 Window Geometry:
   Displays:

@@ -95,6 +95,7 @@ Eigen::Map<Eigen::Vector3d> t_last_curr(para_t);
 
 lidar_slam_msgs::msg::LidarSLAM::SharedPtr lidarSLAMPtr;
 std::mutex mBuf;
+std::shared_ptr<rclcpp::Node> node;
 
 // undistort lidar point
 void TransformToStart(PointType const *const pi, PointType *const po)
@@ -183,14 +184,14 @@ void laserCloudAllHandler(const lidar_slam_msgs::msg::LidarSLAM::SharedPtr pc2ar
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<rclcpp::Node>("laserOdometry");
+    node = std::make_shared<rclcpp::Node>("laserOdometry");
 
     // nh.param<int>("mapping_skip_frame", skipFrameNum, 2);
     int skipFrameNum=2;
     node->declare_parameter<int>("mapping_skip_frame", 2);
     node->get_parameter<int>("mapping_skip_frame", skipFrameNum);
 
-    printf("Mapping %d Hz \n", 10 / skipFrameNum);
+    RCLCPP_INFO(node->get_logger(), "Mapping %d Hz", 10 / skipFrameNum);
 
     auto subAllFivePC = node->create_subscription<lidar_slam_msgs::msg::LidarSLAM>("/pc_arr_sreg", rclcpp::SensorDataQoS(), laserCloudAllHandler);
 
@@ -475,8 +476,8 @@ int main(int argc, char **argv)
 
         // publish odometry
         nav_msgs::msg::Odometry laserOdometry;
-        laserOdometry.header.frame_id = "camera_init";
-        laserOdometry.child_frame_id = "laser_odom";
+        laserOdometry.header.frame_id = "map";
+        laserOdometry.child_frame_id = "base_link";
         laserOdometry.header.stamp = pcTimestamp;
         laserOdometry.pose.pose.orientation.x = q_w_curr.x();
         laserOdometry.pose.pose.orientation.y = q_w_curr.y();
@@ -492,7 +493,7 @@ int main(int argc, char **argv)
         laserPose.pose = laserOdometry.pose.pose;
         laserPath.header.stamp = laserOdometry.header.stamp;
         laserPath.poses.push_back(laserPose);
-        laserPath.header.frame_id = "camera_init";
+        laserPath.header.frame_id = "map";
         pubLaserPath->publish(laserPath);
 
         // transform corner features and plane features to the scan end point
@@ -541,21 +542,21 @@ int main(int argc, char **argv)
             sensor_msgs::msg::PointCloud2 laserCloudCornerLast2;
             pcl::toROSMsg(*laserCloudCornerLast, laserCloudCornerLast2);
             laserCloudCornerLast2.header.stamp = pcTimestamp;
-            laserCloudCornerLast2.header.frame_id = "camera";
+            laserCloudCornerLast2.header.frame_id = "base_link";
             msg_to_mapping.point_clouds.push_back(std::move(laserCloudCornerLast2));
             // pubLaserCloudCornerLast->publish(laserCloudCornerLast2);
 
             sensor_msgs::msg::PointCloud2 laserCloudSurfLast2;
             pcl::toROSMsg(*laserCloudSurfLast, laserCloudSurfLast2);
             laserCloudSurfLast2.header.stamp = pcTimestamp;
-            laserCloudSurfLast2.header.frame_id = "camera";
+            laserCloudSurfLast2.header.frame_id = "base_link";
             msg_to_mapping.point_clouds.push_back(std::move(laserCloudSurfLast2));
             // pubLaserCloudSurfLast->publish(laserCloudSurfLast2);
 
             sensor_msgs::msg::PointCloud2 laserCloudFullRes3;
             pcl::toROSMsg(*laserCloudFullRes, laserCloudFullRes3);
             laserCloudFullRes3.header.stamp = pcTimestamp;
-            laserCloudFullRes3.header.frame_id = "camera";
+            laserCloudFullRes3.header.frame_id = "base_link";
             msg_to_mapping.point_clouds.push_back(std::move(laserCloudFullRes3));
             // pubLaserCloudFullRes->publish(laserCloudFullRes3);
 
@@ -565,6 +566,7 @@ int main(int argc, char **argv)
         }
         // printf("publication time %f ms \n", t_pub.toc());
         // printf("whole laserOdometry time %f ms \n \n", t_whole.toc());
+        RCLCPP_INFO(node->get_logger(), "Whole laserOdometry time %f ms", t_whole.toc());
         if(t_whole.toc() > 100)
             //ROS_WARN("odometry process over 100ms");
             RCLCPP_WARN(node->get_logger(), "odometry process over 100ms");

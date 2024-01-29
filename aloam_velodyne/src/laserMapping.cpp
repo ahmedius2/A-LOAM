@@ -145,6 +145,9 @@ std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Path>> pubLaserAfterMappedPath;
 
 nav_msgs::msg::Path laserAfterMappedPath;
 
+std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster;
+std::shared_ptr<rclcpp::Node> node;
+
 // set initial guess
 void transformAssociateToMap()
 {
@@ -230,8 +233,8 @@ void laserOdometryHandler(const nav_msgs::msg::Odometry::SharedPtr laserOdometry
 	mBuf.unlock();
 
 	nav_msgs::msg::Odometry odomAftMapped;
-	odomAftMapped.header.frame_id = "camera_init";
-	odomAftMapped.child_frame_id = "aft_mapped";
+	odomAftMapped.header.frame_id = "map";
+	odomAftMapped.child_frame_id = "base_link";
 	odomAftMapped.header.stamp = laserOdometry->header.stamp;
 	odomAftMapped.pose.pose.orientation.x = q_w_curr.x();
 	odomAftMapped.pose.pose.orientation.y = q_w_curr.y();
@@ -241,9 +244,18 @@ void laserOdometryHandler(const nav_msgs::msg::Odometry::SharedPtr laserOdometry
 	odomAftMapped.pose.pose.position.y = t_w_curr.y();
 	odomAftMapped.pose.pose.position.z = t_w_curr.z();
 	pubOdomAftMappedHighFrec->publish(odomAftMapped);
+
+    geometry_msgs::msg::TransformStamped transformStamped;
+    transformStamped.header = odomAftMapped.header;
+    transformStamped.child_frame_id = odomAftMapped.child_frame_id;
+    transformStamped.transform.translation.x = t_w_curr.x(); 
+    transformStamped.transform.translation.y = t_w_curr.y();
+    transformStamped.transform.translation.z = t_w_curr.z();
+    transformStamped.transform.rotation = odomAftMapped.pose.pose.orientation;
+    broadcaster->sendTransform(transformStamped);
 }
 
-void process(std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster)
+void process()
 {
 	while(rclcpp::ok())
 	{
@@ -252,6 +264,8 @@ void process(std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster)
         	std::this_thread::sleep_for(dur);
 			continue;
 		}
+
+        TicToc t_whole;
 
 		mBuf.lock();
 
@@ -270,11 +284,10 @@ void process(std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster)
 
 		mBuf.unlock();
 
-        TicToc t_whole;
 
 		transformAssociateToMap();
 
-		TicToc t_shift;
+//		TicToc t_shift;
 		int centerCubeI = int((t_w_curr.x() + 25.0) / 50.0) + laserCloudCenWidth;
 		int centerCubeJ = int((t_w_curr.y() + 25.0) / 50.0) + laserCloudCenHeight;
 		int centerCubeK = int((t_w_curr.z() + 25.0) / 50.0) + laserCloudCenDepth;
@@ -782,7 +795,7 @@ void process(std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster)
 			sensor_msgs::msg::PointCloud2 laserCloudSurround3;
 			pcl::toROSMsg(*laserCloudSurround, laserCloudSurround3);
 			laserCloudSurround3.header.stamp = odom.header.stamp;
-			laserCloudSurround3.header.frame_id = "camera_init";
+			laserCloudSurround3.header.frame_id = "map";
 			pubLaserCloudSurround->publish(laserCloudSurround3);
 		}
 
@@ -797,7 +810,7 @@ void process(std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster)
 			sensor_msgs::msg::PointCloud2 laserCloudMsg;
 			pcl::toROSMsg(laserCloudMap, laserCloudMsg);
 			laserCloudMsg.header.stamp = odom.header.stamp;
-			laserCloudMsg.header.frame_id = "camera_init";
+			laserCloudMsg.header.frame_id = "map";
 			pubLaserCloudMap->publish(laserCloudMsg);
 		}
 
@@ -810,16 +823,15 @@ void process(std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster)
 		sensor_msgs::msg::PointCloud2 laserCloudFullRes3;
 		pcl::toROSMsg(*laserCloudFullRes, laserCloudFullRes3);
 		laserCloudFullRes3.header.stamp = odom.header.stamp;
-		laserCloudFullRes3.header.frame_id = "camera_init";
+		laserCloudFullRes3.header.frame_id = "map";
 		pubLaserCloudFullRes->publish(laserCloudFullRes3);
 
 		// printf("mapping pub time %f ms \n", t_pub.toc());
 
-		// printf("whole mapping time %f ms +++++\n", t_whole.toc());
 
 		nav_msgs::msg::Odometry odomAftMapped;
-		odomAftMapped.header.frame_id = "camera_init";
-		odomAftMapped.child_frame_id = "aft_mapped";
+		odomAftMapped.header.frame_id = "map";
+		odomAftMapped.child_frame_id = "base_link";
 		odomAftMapped.header.stamp = odom.header.stamp;
 		odomAftMapped.pose.pose.orientation.x = q_w_curr.x();
 		odomAftMapped.pose.pose.orientation.y = q_w_curr.y();
@@ -830,29 +842,11 @@ void process(std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster)
 		odomAftMapped.pose.pose.position.z = t_w_curr.z();
 		pubOdomAftMapped->publish(odomAftMapped);
 
-		geometry_msgs::msg::PoseStamped laserAfterMappedPose;
-		laserAfterMappedPose.header = odomAftMapped.header;
-		laserAfterMappedPose.pose = odomAftMapped.pose.pose;
-		laserAfterMappedPath.header.stamp = odomAftMapped.header.stamp;
-		laserAfterMappedPath.header.frame_id = "camera_init";
-		laserAfterMappedPath.poses.push_back(laserAfterMappedPose);
-		pubLaserAfterMappedPath->publish(laserAfterMappedPath);
-
-		geometry_msgs::msg::TransformStamped transformStamped;
-		transformStamped.header.frame_id = "camera_init";
-		transformStamped.child_frame_id = "aft_mapped";
-		transformStamped.transform.translation.x = t_w_curr(0);  // Adjust the translation values
-		transformStamped.transform.translation.y = t_w_curr(1);
-		transformStamped.transform.translation.z = t_w_curr(2);
-		transformStamped.transform.rotation.x = q_w_curr.x();  // Adjust the rotation values
-		transformStamped.transform.rotation.y = q_w_curr.y();
-		transformStamped.transform.rotation.z = q_w_curr.z();
-		transformStamped.transform.rotation.w = q_w_curr.w();
-		transformStamped.header.stamp = odomAftMapped.header.stamp;
-		broadcaster->sendTransform(transformStamped);
-
 		frameCount++;
-		// }
+
+		//printf("whole mapping time %f ms +++++\n", t_whole.toc());
+        RCLCPP_INFO(node->get_logger(), "Whole mapping time         %f ms", t_whole.toc());
+
 		// std::chrono::milliseconds dura(2);
         // std::this_thread::sleep_for(dura);
 	}
@@ -863,7 +857,7 @@ int main(int argc, char **argv)
 	// ros::init(argc, argv, "laserMapping");
 	// ros::NodeHandle nh;
 	rclcpp::init(argc, argv);
-    auto node = std::make_shared<rclcpp::Node>("laserMapping");
+    node = std::make_shared<rclcpp::Node>("laserMapping");
 
 	float lineRes = 0;
 	float planeRes = 0;
@@ -895,9 +889,9 @@ int main(int argc, char **argv)
 		laserCloudSurfArray[i].reset(new pcl::PointCloud<PointType>());
 	}
 
-    auto br = std::make_unique<tf2_ros::TransformBroadcaster>(node);
+    broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(node);
 
-	std::thread mapping_process(process, std::move(br));
+	std::thread mapping_process(process);
 	mapping_process.detach();
 	
 	rclcpp::spin(node);

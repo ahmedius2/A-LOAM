@@ -9,9 +9,9 @@ def generate_launch_description():
     params = {
         'scan_line': 16,
         'minimum_range': 0.3,
-        'mapping_skip_frame': 1,
-        'mapping_line_resolution': 0.2,
-        'mapping_plane_resolution': 0.4,
+        'mapping_skip_frame': 5,
+        'mapping_line_resolution': 0.2, # ORIG
+        'mapping_plane_resolution': 0.4, # ORIG
     }
 
     # Create a LaunchDescription
@@ -30,7 +30,8 @@ def generate_launch_description():
             name='ascanRegistration',
             output='screen',
             parameters=[{'scan_line': params['scan_line'],
-				'minimum_range': params['minimum_range']}]
+				'minimum_range': params['minimum_range']}],
+            remappings=[('/velodyne_points','/point_cloud'),]
         ),
         Node(
             package='aloam_velodyne',
