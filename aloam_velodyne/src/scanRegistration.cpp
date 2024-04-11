@@ -41,20 +41,16 @@
 #include <memory>
 #include "aloam_velodyne/common.h"
 #include "aloam_velodyne/tic_toc.h"
-// #include <nav_msgs/msg/odometry.hpp>
-// #include <opencv/cv.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/kdtree/kdtree_flann.h>
-// #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 #include <lidar_slam_msgs/msg/lidar_slam.hpp>
-// #include <tf/transform_datatypes.h>
-// #include <tf/transform_broadcaster.h>
+#include "time_profiling_spinner/time_profiling_spinner.h"
 
 using std::atan2;
 using std::cos;
@@ -128,7 +124,7 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
     }
 
     TicToc t_whole;
-    TicToc t_prepare;
+    // TicToc t_prepare;
     std::vector<int> scanStartInd(N_SCANS, 0);
     std::vector<int> scanEndInd(N_SCANS, 0);
 
@@ -269,14 +265,14 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
     }
 
 
-    TicToc t_pts;
+    // TicToc t_pts;
 
     pcl::PointCloud<PointType> cornerPointsSharp;
     pcl::PointCloud<PointType> cornerPointsLessSharp;
     pcl::PointCloud<PointType> surfPointsFlat;
     pcl::PointCloud<PointType> surfPointsLessFlat;
 
-    float t_q_sort = 0;
+    // float t_q_sort = 0;
     for (int i = 0; i < N_SCANS; i++)
     {
         if( scanEndInd[i] - scanStartInd[i] < 6)
@@ -287,9 +283,9 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
             int sp = scanStartInd[i] + (scanEndInd[i] - scanStartInd[i]) * j / 6; 
             int ep = scanStartInd[i] + (scanEndInd[i] - scanStartInd[i]) * (j + 1) / 6 - 1;
 
-            TicToc t_tmp;
+            // TicToc t_tmp;
             std::sort (cloudSortInd + sp, cloudSortInd + ep + 1, comp);
-            t_q_sort += t_tmp.toc();
+            // t_q_sort += t_tmp.toc();
 
             int largestPickedNum = 0;
             for (int k = ep; k >= sp; k--)
@@ -464,11 +460,9 @@ void laserCloudHandler(const sensor_msgs::msg::PointCloud2::SharedPtr laserCloud
         }
     }
 
-    // printf("scan registration time %f ms *************\n", t_whole.toc());
-    RCLCPP_INFO(node->get_logger(), "Whole scanReg time %f ms", t_whole.toc());
-    if(t_whole.toc() > 100.0)
-        RCLCPP_WARN(node->get_logger(), "scan registration process over 100ms, it is %f", t_whole.toc());
-        // ROS_WARN("scan registration process over 100ms");
+    auto t = t_whole.toc();
+    if(t > 100.0)
+        RCLCPP_WARN(node->get_logger(), "SCAN REG TIME: %f ms", t);
 }
 
 int main(int argc, char **argv)
@@ -494,12 +488,6 @@ int main(int argc, char **argv)
     auto subLaserCloud = node->create_subscription<sensor_msgs::msg::PointCloud2>("/velodyne_points", 
             rclcpp::SensorDataQoS(), laserCloudHandler);
 
-    // pubLaserCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("/velodyne_cloud_2", 10);
-    // pubCornerPointsSharp = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_sharp", 10);
-    // pubCornerPointsLessSharp = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_less_sharp", 10);
-    // pubSurfPointsFlat = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_flat", 10);
-    // pubSurfPointsLessFlat = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_cloud_less_flat", 10);
-
     pubLidarSLAM = node->create_publisher<lidar_slam_msgs::msg::LidarSLAM>("/pc_arr_sreg", 10);
 
     pubRemovePoints = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_remove_points", 10);
@@ -512,7 +500,9 @@ int main(int argc, char **argv)
         }
     }
 
-    rclcpp::spin(node);
+    TimeProfilingSpinner spinner(node);
+    spinner.spinAndProfileUntilShutdown();
+    //rclcpp::spin(node);
     rclcpp::shutdown();
 
     return 0;

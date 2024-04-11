@@ -27,6 +27,7 @@ find_package(tf2_ros REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(time_profiling_spinner REQUIRED)
 
 add_definitions(${PCL_DEFINITIONS})
 
@@ -38,12 +39,12 @@ ament_target_dependencies(ascanRegistration
   "lidar_slam_msgs"
   "pcl_conversions"
   "PCL"
+  "time_profiling_spinner"
 )
 target_include_directories(ascanRegistration PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include>"
   ${PCL_INCLUDE_DIRS}
-  ${POINT_CLOUD2_ARR_INCLUDE_DIRS}
   )
 #${OpenCV_INCLUDE_DIRS}
 
@@ -57,6 +58,7 @@ ament_target_dependencies(alaserOdometry
   "pcl_conversions"
   "PCL"
   "Eigen3"
+  "time_profiling_spinner"
 )
 target_link_libraries(alaserOdometry
     Ceres::ceres)
@@ -79,6 +81,7 @@ ament_target_dependencies(alaserMapping
   "tf2_ros"
   "PCL"
   "Eigen3"
+  "time_profiling_spinner"
 )
 target_link_libraries(alaserMapping
     Ceres::ceres)

@@ -1,0 +1,4 @@
+source;share/aloam_velodyne/local_setup.bash
+source;share/aloam_velodyne/local_setup.dsv
+source;share/aloam_velodyne/local_setup.sh
+source;share/aloam_velodyne/local_setup.zsh
