@@ -48,4 +48,10 @@ def generate_launch_description():
             parameters=[{'mapping_line_resolution': params['mapping_line_resolution'],
 				'mapping_plane_resolution': params['mapping_plane_resolution']}]
         ),
+        Node(
+            package='aloam_velodyne',
+            executable='mappedPoseBroadcaster',
+            name='mappedPoseBroadcaster',
+            output='screen'
+        ),
     ])

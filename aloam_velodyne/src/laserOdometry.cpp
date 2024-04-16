@@ -178,8 +178,9 @@ void laserCloudAllHandler(const lidar_slam_msgs::msg::LidarSLAM::SharedPtr lidar
 
             //ceres::LossFunction *loss_function = NULL;
             ceres::LossFunction *loss_function = new ceres::HuberLoss(0.1);
-            ceres::LocalParameterization *q_parameterization =
-                new ceres::EigenQuaternionParameterization();
+            //ceres::LocalParameterization *q_parameterization =
+            //    new ceres::EigenQuaternionParameterization();
+	    ceres::Manifold *q_parameterization = new ceres::EigenQuaternionManifold();
             ceres::Problem::Options problem_options;
 
             ceres::Problem problem(problem_options);
@@ -391,6 +392,7 @@ void laserCloudAllHandler(const lidar_slam_msgs::msg::LidarSLAM::SharedPtr lidar
             options.linear_solver_type = ceres::DENSE_QR;
             options.max_num_iterations = 4;
             options.minimizer_progress_to_stdout = false;
+	    //options.dense_linear_algebra_library_type = ceres::CUDA; // Cuda makes it worse +10ms
             ceres::Solver::Summary summary;
             ceres::Solve(options, &problem, &summary);
             //printf("solver time %f ms \n", t_solver.toc());

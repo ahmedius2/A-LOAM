@@ -92,6 +92,22 @@ target_include_directories(alaserMapping PUBLIC
   ${EIGEN3_INCLUDE_DIRS}
 )
 
+
+add_executable(mappedPoseBroadcaster src/mappedPoseBroadcaster.cpp)
+ament_target_dependencies(mappedPoseBroadcaster
+  "rclcpp"
+  "geometry_msgs"
+  "nav_msgs"
+  "tf2_ros"
+  "Eigen3"
+)
+target_include_directories(mappedPoseBroadcaster PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include>"
+  ${EIGEN3_INCLUDE_DIRS}
+)
+
+
 #TODO Port kittiHelper to ROS2
 #add_executable(kittiHelper src/kittiHelper.cpp)
 #ament_target_dependencies(kittiHelper PUBLIC ${dependencies})
@@ -101,6 +117,7 @@ install(TARGETS
   ascanRegistration
   alaserOdometry
   alaserMapping
+  mappedPoseBroadcaster  
   #kittiHelper
   DESTINATION lib/${PROJECT_NAME}
 )
