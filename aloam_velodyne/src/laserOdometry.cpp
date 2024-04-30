@@ -149,6 +149,11 @@ void laserCloudAllHandler(const lidar_slam_msgs::msg::LidarSLAM::SharedPtr lidar
     //mBuf.unlock();
 
     //mBuf.lock();
+    laserCloudFullRes->clear();
+    cornerPointsSharp->clear();
+    cornerPointsLessSharp->clear();
+    surfPointsFlat->clear();
+    surfPointsLessFlat->clear();
     pcl::fromROSMsg(lidarSLAMPtr->point_clouds[0], *laserCloudFullRes);
     pcl::fromROSMsg(lidarSLAMPtr->point_clouds[1], *cornerPointsSharp);
     pcl::fromROSMsg(lidarSLAMPtr->point_clouds[2], *cornerPointsLessSharp);
@@ -520,8 +525,8 @@ int main(int argc, char **argv)
 
     auto subAllFivePC = node->create_subscription<lidar_slam_msgs::msg::LidarSLAM>("/pc_arr_sreg", rclcpp::SensorDataQoS(), laserCloudAllHandler);
 
-    pubLidarSLAM = node->create_publisher<lidar_slam_msgs::msg::LidarSLAM>("/lidar_slam", 10);
-    pubLaserOdometry = node->create_publisher<nav_msgs::msg::Odometry>("/laser_odom_to_init", 10);
+    pubLidarSLAM = node->create_publisher<lidar_slam_msgs::msg::LidarSLAM>("/lidar_slam", 100);
+    pubLaserOdometry = node->create_publisher<nav_msgs::msg::Odometry>("/laser_odom_to_init", 100);
 //    auto pubLaserPath = node->create_publisher<nav_msgs::msg::Path>("/laser_odom_path", 10);
 
     TimeProfilingSpinner spinner(node);

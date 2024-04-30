@@ -73,7 +73,7 @@ std::shared_ptr<rclcpp::Node> node;
 // std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> 
 //     pubLaserCloud, pubCornerPointsSharp, pubCornerPointsLessSharp, 
 //     pubSurfPointsFlat, pubSurfPointsLessFlat, pubRemovePoints;
-std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> pubRemovePoints;
+//std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> pubRemovePoints;
 std::shared_ptr<rclcpp::Publisher<lidar_slam_msgs::msg::LidarSLAM>> pubLidarSLAM;
 std::vector<std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>>> pubEachScan;
 
@@ -488,9 +488,9 @@ int main(int argc, char **argv)
     auto subLaserCloud = node->create_subscription<sensor_msgs::msg::PointCloud2>("/velodyne_points", 
             rclcpp::SensorDataQoS(), laserCloudHandler);
 
-    pubLidarSLAM = node->create_publisher<lidar_slam_msgs::msg::LidarSLAM>("/pc_arr_sreg", 10);
+    pubLidarSLAM = node->create_publisher<lidar_slam_msgs::msg::LidarSLAM>("/pc_arr_sreg", 100);
 
-    pubRemovePoints = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_remove_points", 10);
+    //pubRemovePoints = node->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_remove_points", 10);
 
     if (PUB_EACH_LINE)
     {

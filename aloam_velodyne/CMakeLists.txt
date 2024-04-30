@@ -1,14 +1,21 @@
 cmake_minimum_required(VERSION 3.5)
-project(aloam_velodyne)
+project(aloam_velodyne
+    LANGUAGES CUDA CXX C)
+
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wall -Wextra -Wpedantic)
+    add_compile_options(-Wall -Wextra -Wno-pedantic)
 endif()
 
 #list(APPEND CMAKE_PREFIX_PATH "/usr/local")
+set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
+# NOTE Modify the following with respect to your architecture
+# 72 is AGX Xavier
+set(CMAKE_CUDA_ARCHITECTURES "72")
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
@@ -28,6 +35,9 @@ find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(time_profiling_spinner REQUIRED)
+find_package(CUDAToolkit)
+
+add_subdirectory(./cudaKDTree)
 
 add_definitions(${PCL_DEFINITIONS})
 
@@ -69,8 +79,21 @@ target_include_directories(alaserOdometry PUBLIC
   ${EIGEN3_INCLUDE_DIRS}
 )
 
+#SET(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode arch=compute_72,code=sm_72 -Wno-deprecated-gpu-targets")
+
+
+add_library(alaserMappingCuda src/cudaMapping.cu)
+set_target_properties(alaserMappingCuda PROPERTIES CUDA_ARCHITECTURES "72")
+target_link_libraries(alaserMappingCuda cudaKDTree)
+target_include_directories(alaserMappingCuda PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  # "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cudaKDTree/cukd>"
+  ${EIGEN3_INCLUDE_DIRS}
+)
 
 add_executable(alaserMapping src/laserMapping.cpp)
+# set_target_properties(alaserMapping PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+# set_target_properties(alaserMapping PROPERTIES LINKER_LANGUAGE CUDA)
 ament_target_dependencies(alaserMapping
   "rclcpp"
   "geometry_msgs"
@@ -84,14 +107,17 @@ ament_target_dependencies(alaserMapping
   "time_profiling_spinner"
 )
 target_link_libraries(alaserMapping
+    alaserMappingCuda
+    CUDA::cudart
+    CUDA::nvToolsExt
     Ceres::ceres)
 target_include_directories(alaserMapping PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include>"
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
 )
-
 
 add_executable(mappedPoseBroadcaster src/mappedPoseBroadcaster.cpp)
 ament_target_dependencies(mappedPoseBroadcaster
